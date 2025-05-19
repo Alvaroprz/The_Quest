@@ -1,20 +1,17 @@
-
 import pygame
 import sys
 import random
 from database import init_db, save_score, get_top_scores
 
-# Inicializar pygame
 pygame.init()
 
-# Constantes
 WIDTH, HEIGHT = 800, 600
 FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 SHIP_SPEED = 5
 OBSTACLE_SPEEDS = [4, 5, 6, 7, 8]
-LEVEL_DURATION = 30  # segundos por nivel
+LEVEL_DURATION = 30
 TOTAL_LEVELS = 5
 
 # Cargar imágenes
@@ -23,32 +20,42 @@ obstacle_img = pygame.image.load("assets/obstacle.png")
 planet_img = pygame.image.load("assets/planet.png")
 background_img = pygame.image.load("assets/background.png")
 
-# Escalar imágenes
 ship_img = pygame.transform.scale(ship_img, (60, 40))
 obstacle_img = pygame.transform.scale(obstacle_img, (60, 60))
 planet_img = pygame.transform.scale(planet_img, (100, 100))
-background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
-# Pantalla
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("The Quest")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 24)
 
-# Clases
 class Ship:
     def __init__(self):
         self.image = ship_img
+        self.original_image = self.image
         self.rect = self.image.get_rect()
         self.rect.x = 50
         self.rect.centery = HEIGHT // 2
         self.lives = 3
+        self.angle = 0
 
     def move(self, keys):
         if keys[pygame.K_UP] and self.rect.top > 0:
             self.rect.y -= SHIP_SPEED
         if keys[pygame.K_DOWN] and self.rect.bottom < HEIGHT:
             self.rect.y += SHIP_SPEED
+
+    def auto_land(self):
+        if self.angle < 180:
+            self.angle += 10
+            self.image = pygame.transform.rotate(self.original_image, self.angle)
+        else:
+            if self.rect.centerx < WIDTH // 2:
+                self.rect.x += 4
+            if self.rect.centery < HEIGHT // 2:
+                self.rect.y += 2
+            elif self.rect.centery > HEIGHT // 2:
+                self.rect.y -= 2
 
     def draw(self):
         screen.blit(self.image, self.rect)
@@ -117,62 +124,72 @@ def main():
         level_start = pygame.time.get_ticks()
         speed = OBSTACLE_SPEEDS[min(level - 1, len(OBSTACLE_SPEEDS) - 1)]
 
+        landing = False
+        landing_complete = False
+
         while True:
             clock.tick(FPS)
             elapsed_time = (pygame.time.get_ticks() - level_start) / 1000
-            if elapsed_time > LEVEL_DURATION:
-                break
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if landing_complete and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    break
 
             keys = pygame.key.get_pressed()
-            ship.move(keys)
+            if not landing:
+                ship.move(keys)
 
-            # Añadir nuevos obstáculos
-            timer += 1
-            if timer > 40:
-                obstacles.append(Obstacle(speed))
-                timer = 0
+            # Generar obstáculos
+            if not landing:
+                timer += 1
+                if timer > 40:
+                    obstacles.append(Obstacle(speed))
+                    timer = 0
 
             # Actualizar obstáculos
             for ob in obstacles:
                 ob.update()
 
-            # Eliminar obstáculos que ya salieron de la pantalla
+            # Eliminar obstáculos fuera de pantalla
             obstacles = [ob for ob in obstacles if ob.rect.right > 0]
 
-            # Colisiones
-            for ob in obstacles[:]:
-                if ob.rect.colliderect(ship.rect):
-                    ship.lives -= 1
-                    obstacles.remove(ob)
-                    if ship.lives <= 0:
-                        show_game_over_screen(score)
+            # Colisiones solo si no estamos aterrizando
+            if not landing:
+                for ob in obstacles[:]:
+                    if ob.rect.colliderect(ship.rect):
+                        ship.lives -= 1
+                        obstacles.remove(ob)
+                        if ship.lives <= 0:
+                            show_game_over_screen(score)
 
-            # 🔄 LIMPIAR pantalla
+            # Dibujar
             screen.blit(background_img, (0, 0))
-
-            # 🔄 DIBUJAR elementos
-            ship.draw()
             for ob in obstacles:
                 ob.draw()
+
+            screen.blit(planet_img, (WIDTH // 2 - 50, HEIGHT // 2 - 50))
+
+            if landing:
+                ship.auto_land()
+            ship.draw()
 
             score += 1
             show_text(f"Puntuación: {score}", 10, 10)
             show_text(f"Vidas: {ship.lives}", 10, 40)
 
+            if landing and ship.rect.centerx >= WIDTH // 2 - 10:
+                landing_complete = True
+                show_text("Pulsa ESPACIO para continuar", WIDTH // 2 - 160, HEIGHT // 2 + 100)
+
             pygame.display.flip()
 
+            if elapsed_time > LEVEL_DURATION and not landing:
+                landing = True
+                obstacles = []
 
-    # Final
-    screen.blit(background_img, (0, 0))
-    screen.blit(planet_img, (WIDTH // 2 - 50, HEIGHT // 2 - 50))
-    show_text("Has llegado al planeta", WIDTH // 2 - 100, HEIGHT // 2 + 70)
-    pygame.display.flip()
-    pygame.time.delay(3000)
     show_game_over_screen(score)
 
 if __name__ == "__main__":
