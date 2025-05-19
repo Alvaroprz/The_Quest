@@ -22,7 +22,6 @@ python main.py
 - 5 niveles con dificultad creciente.
 - Obstáculos aleatorios y vidas limitadas.
 - Sistema de puntuaciones altas con SQLite.
-- Estilo visual moderno con imágenes básicas.
 
 ## Requisitos
 
