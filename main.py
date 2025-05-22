@@ -106,12 +106,23 @@ def show_game_over_screen(score):
     show_text("Top 5 puntuaciones:", WIDTH // 2 - 100, 160)
     for i, (ini, sc) in enumerate(top_scores):
         show_text(f"{i+1}. {ini} - {sc}", WIDTH // 2 - 80, 200 + i*30)
-    show_text("Pulsa cualquier tecla para salir", WIDTH // 2 - 150, 400)
+    show_text("Pulsa R para reintentar o ESC para salir", WIDTH // 2 - 200, 400)
     pygame.display.flip()
-    wait_for_key()
-    pygame.quit()
-    sys.exit()
 
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.key == pygame.K_r:
+                    main()
+                    return
 def main():
     init_db()
     show_start_screen()
