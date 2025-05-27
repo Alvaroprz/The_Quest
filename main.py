@@ -14,17 +14,16 @@ OBSTACLE_SPEEDS = [4, 5, 6, 7, 8]
 LEVEL_DURATION = 30
 TOTAL_LEVELS = 5
 
-# Cargar imágenes
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 ship_img = pygame.image.load("assets/ship.png")
-obstacle_img = pygame.image.load("assets/obstacle.png")
+obstacle_imgs = [pygame.image.load(f"assets/obstacle{i}.png") for i in range(1, 5)]
 planet_img = pygame.image.load("assets/planet.png")
-background_img = pygame.image.load("assets/background.png")
+background_imgs = [pygame.transform.scale(pygame.image.load(f"assets/background{i}.png").convert(), (WIDTH, HEIGHT)) for i in range(1, 5)]
 
 ship_img = pygame.transform.scale(ship_img, (60, 40))
-obstacle_img = pygame.transform.scale(obstacle_img, (60, 60))
+obstacle_imgs = [pygame.transform.scale(img, (random.randint(40, 80), random.randint(40, 80))) for img in obstacle_imgs]
 planet_img = pygame.transform.scale(planet_img, (350, 350))
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("The Quest")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 24)
@@ -62,7 +61,7 @@ class Ship:
 
 class Obstacle:
     def __init__(self, speed):
-        self.image = obstacle_img
+        self.image = random.choice(obstacle_imgs)
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH
         self.rect.y = random.randint(0, HEIGHT - self.rect.height)
@@ -79,7 +78,11 @@ def show_text(text, x, y):
     screen.blit(img, (x, y))
 
 def show_start_screen():
-    screen.blit(background_img, (0, 0))
+    start_bg = pygame.transform.scale(
+        pygame.image.load("assets/start_screen_background.png").convert(), 
+        (WIDTH, HEIGHT)
+    )
+    screen.blit(start_bg, (0, 0))
     show_text("THE QUEST", WIDTH // 2 - 80, HEIGHT // 2 - 40)
     show_text("Pulsa cualquier tecla para empezar", WIDTH // 2 - 180, HEIGHT // 2)
     pygame.display.flip()
@@ -123,13 +126,14 @@ def show_game_over_screen(score):
                 elif event.key == pygame.K_r:
                     main()
                     return
+
 def main():
     init_db()
     show_start_screen()
     score = 0
 
     for level in range(1, TOTAL_LEVELS + 1):
-        ship = Ship()  # Reinicia posición al comenzar nivel
+        ship = Ship()
         obstacles = []
         timer = 0
         level_start = pygame.time.get_ticks()
@@ -176,7 +180,7 @@ def main():
                         if ship.lives <= 0:
                             show_game_over_screen(score)
 
-            screen.blit(background_img, (0, 0))
+            screen.blit(background_imgs[level - 1], (0, 0))
             for ob in obstacles:
                 ob.draw()
 
