@@ -2,17 +2,9 @@ import pygame
 import sys
 import random
 from database import init_db, save_score, get_top_scores
+from __init__ import WIDTH, HEIGHT, FPS , WHITE, BLACK, SHIP_SPEED, OBSTACLE_SPEEDS, LEVEL_DURATION, TOTAL_LEVELS
 
 pygame.init()
-
-WIDTH, HEIGHT = 800, 600
-FPS = 60
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-SHIP_SPEED = 5
-OBSTACLE_SPEEDS = [4, 5, 6, 7, 8]
-LEVEL_DURATION = 30
-TOTAL_LEVELS = 5
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 ship_img = pygame.image.load("assets/ship.png")
