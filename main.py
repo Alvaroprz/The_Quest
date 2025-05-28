@@ -24,6 +24,10 @@ ship_img = pygame.transform.scale(ship_img, (60, 40))
 obstacle_imgs = [pygame.transform.scale(img, (random.randint(40, 80), random.randint(40, 80))) for img in obstacle_imgs]
 planet_img = pygame.transform.scale(planet_img, (350, 350))
 
+explosion_sound = pygame.mixer.Sound("assets/explosion.wav")
+explosion_img = pygame.image.load("assets/explosion.png")
+explosion_img = pygame.transform.scale(explosion_img, (80, 80))
+
 pygame.display.set_caption("The Quest")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 24)
@@ -77,12 +81,14 @@ def show_text(text, x, y):
     img = font.render(text, True, WHITE)
     screen.blit(img, (x, y))
 
+def show_explosion(x, y):
+    screen.blit(explosion_img, (x - 40, y - 40))
+    pygame.display.flip()
+    explosion_sound.play()
+    pygame.time.delay(400)
+
 def show_start_screen():
-    start_bg = pygame.transform.scale(
-        pygame.image.load("assets/start_screen_background.png").convert(), 
-        (WIDTH, HEIGHT)
-    )
-    screen.blit(start_bg, (0, 0))
+    screen.blit(background_imgs[0], (0, 0))
     show_text("THE QUEST", WIDTH // 2 - 80, HEIGHT // 2 - 40)
     show_text("Pulsa cualquier tecla para empezar", WIDTH // 2 - 180, HEIGHT // 2)
     pygame.display.flip()
@@ -175,6 +181,7 @@ def main():
             if not landing:
                 for ob in obstacles[:]:
                     if ob.rect.colliderect(ship.rect):
+                        show_explosion(ship.rect.centerx, ship.rect.centery)
                         ship.lives -= 1
                         obstacles.remove(ob)
                         if ship.lives <= 0:
